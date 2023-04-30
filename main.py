@@ -6,12 +6,12 @@ from pygame.math import Vector2
 
 color = (240,240,240)
 
-FRICTION = 0.35
+FRICTION = 0.95
 GRAVITY = 9.8
 
 surfaceSize = (1280,720)
 
-# TODO: move class defintions to another file
+# TODO: move class definitions to another file
 
 class Point:
     def __init__(self, position: Vector2, static=False):
@@ -20,6 +20,7 @@ class Point:
         self.radius = 3
         self.static = static
         self.clicked = False
+        self.rightClicked = False
 
     def __sub__(self, b):
         return self.position - b.position
@@ -28,7 +29,8 @@ class Point:
         pygame.draw.circle(surface, color, self.position, self.radius)
 
     def update(self):
-        if self.static:
+        if self.static or self.clicked:
+            # self.previousPosition = self.position
             return
         # calculate velocity of point, use to update position
         velocity = self.position - self.previousPosition
@@ -47,6 +49,13 @@ class Point:
             self.position = mousePosition
             self.clicked = True
 
+    def toggleStatic(self, mousePosition):
+        dist = (self.position - mousePosition).length()
+        if dist < 10 and not self.rightClicked:
+            self.static = not self.static
+            self.rightClicked = True
+
+
 class Line:
     def __init__(self, point1: Point, point2: Point):
         self.point1 = point1
@@ -58,16 +67,34 @@ class Line:
 
     def update(self):
         # calculate effect of line on points
-        ELASTICITY = 0.55
+        ELASTICITY = 0.95
         dPosition = self.point1 - self.point2
         length = dPosition.length()
+
+        # if points overlap exactly, move them slightly
+        if length == 0:
+            if self.point2.previousPosition[0] < self.point2.position[0]:
+                self.point2.position[0] -= 1
+            elif self.point2.previousPosition[0] > self.point2.position[0]:
+                self.point2.position[0] += 1
+
+            if self.point2.previousPosition[1] < self.point2.position[1]:
+                self.point2.position[1] -= 1
+            elif self.point2.previousPosition[1] > self.point2.position[1]:
+                self.point2.position[1] += 1
+
+            dPosition = self.point1 - self.point2
+            length = dPosition.length()
+
+
         dLength = self.trueLength - length
         delta = ELASTICITY * 0.5 * dPosition * dLength / length
 
-        if not self.point1.static:
+        if not self.point1.static and not self.point1.clicked:
             self.point1.position += delta
-        if not self.point2.static:
+        if not self.point2.static and not self.point2.clicked:
             self.point2.position -= delta
+
 
 class Swatch:
     def __init__(self, origin, rows, cols, space):
@@ -123,15 +150,35 @@ class Swatch:
                     point.drag(mousePosition)
                     if point.clicked:
                         self.selected = point
+                        break
         else:
             for point in self.points:
                 point.clicked = False
+
+        # toggle static
+        if pygame.mouse.get_pressed()[2]:
+            mouseTuple = pygame.mouse.get_pos()
+            mousePosition = Vector2(mouseTuple[0], mouseTuple[1])
+            if self.selected is not None:
+                self.selected.toggleStatic(mousePosition)
+            else:
+                for point in self.points:
+                    point.toggleStatic(mousePosition)
+                    if point.rightClicked:
+                        self.selected = point
+                        break
+        else:
+            for point in self.points:
+                point.rightClicked = False
+
+        if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]):
             self.selected = None
+
 
 pygame.init()
 surface = pygame.display.set_mode(surfaceSize)
 
-swatch = Swatch((200,100), 10, 5, 20)
+swatch = Swatch((200,50), 20, 10, 5)
 
 running = True
 
