@@ -161,6 +161,7 @@ class Swatch:
                 self.lines.append(Line(point, self.points[ind + 1]))
             if y + space < origin[1] + space * rows:
                 self.lines.append(Line(point, self.points[ind + cols]))
+        self.lines = list(reversed(self.lines))
 
         # currently selected point
         self.selected = None
@@ -179,41 +180,3 @@ class Swatch:
 
         for line in self.lines:
             line.update()
-
-    # handle events *DEPRECATED*
-    def events(self):
-        # drag points
-        if pygame.mouse.get_pressed()[0]:
-            mouseTuple = pygame.mouse.get_pos()
-            mousePosition = Vector2(mouseTuple[0], mouseTuple[1])
-            # only drag the selected point
-            if self.selected is not None:
-                self.selected.drag(mousePosition)
-            else:
-                for point in self.points:
-                    point.drag(mousePosition)
-                    if point.clicked:
-                        self.selected = point
-                        break
-        else:
-            for point in self.points:
-                point.clicked = False
-
-        # toggle static
-        if pygame.mouse.get_pressed()[2]:
-            mouseTuple = pygame.mouse.get_pos()
-            mousePosition = Vector2(mouseTuple[0], mouseTuple[1])
-            if self.selected is not None:
-                self.selected.toggleStatic(mousePosition)
-            else:
-                for point in self.points:
-                    point.toggleStatic(mousePosition)
-                    if point.rightClicked:
-                        self.selected = point
-                        break
-        else:
-            for point in self.points:
-                point.rightClicked = False
-
-        if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]):
-            self.selected = None
