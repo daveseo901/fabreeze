@@ -2,6 +2,8 @@
 A cloth simulator that uses Verlet integration to simulate a piece of cloth as a lattice
 of points connected by strings.
 
+![image](https://github.com/daveseo901/fabreeze/assets/55063490/98fe595f-902e-4e3d-8fc9-4cd0c347ae1d)
+
 To run, execute `python main.py` in the command line (this project uses Python 3).
 
 To change the dimensions of the cloth, edit the `rows` and `cols` variables in `main.py`.
