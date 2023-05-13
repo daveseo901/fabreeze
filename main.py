@@ -9,14 +9,16 @@ pygame.init()
 surface = pygame.display.set_mode(surfaceSize)
 
 origin = (200,50)
-rows = 15
-cols = 30
+rows = 25
+cols = 60
 space = 10
 
 swatch = Swatch(surfaceSize, origin, rows, cols, space)
 
 swatch.points[0].static = True
 swatch.points[cols-1].static = True
+for ind in range(0, cols):
+    swatch.points[ind].static = True
 swatch.points[cols*(rows-1)].static = True
 swatch.points[-1].static = True
 
