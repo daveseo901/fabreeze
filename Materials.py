@@ -2,6 +2,8 @@ import pygame
 from pygame.math import Vector2
 import threading
 
+NUM_THREADS = 4
+
 # TODO: more colors
 
 COLOR = (240,240,240)
@@ -135,7 +137,6 @@ class Line:
         length = dPosition.length()
 
         # if points overlap exactly, move them slightly
-        # TODO: make this happen before updating each point
         if length == 0:
             if self.point2.previousPosition[0] < self.point2.position[0]:
                 self.point2.position[0] -= 1
@@ -205,18 +206,36 @@ class Swatch:
 
     def update(self):
         # TODO: handle events more efficiently
-        threshold = round(self.numLines / 2)
-        t1 = threading.Thread(target=self.updateLinesThread, args=(0, threshold,))
-        t2 = threading.Thread(target=self.updateLinesThread, args=(threshold + 1, self.numLines - 1,))
-        t1.start()
-        t2.start()
-        t1.join()
-        t2.join()
+        threshold = round(self.numLines / NUM_THREADS)
 
-        threshold = round(self.numPoints / 2)
-        t1 = threading.Thread(target=self.updatePointsThread, args=(0, threshold,))
-        t2 = threading.Thread(target=self.updatePointsThread, args=(threshold + 1, self.numPoints - 1,))
-        t1.start()
-        t2.start()
-        t1.join()
-        t2.join()
+        threads = []
+        for threadInd in range(NUM_THREADS):
+            first = threadInd * threshold
+            last = min((threadInd + 1) * threshold - 1, self.numLines - 1)
+            threads.append(
+                threading.Thread(
+                    target=self.updateLinesThread,
+                    args=(first, last)
+                )
+            )
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        threshold = round(self.numPoints / NUM_THREADS)
+
+        threads = []
+        for threadInd in range(NUM_THREADS):
+            first = threadInd * threshold
+            last = min((threadInd + 1) * threshold - 1, self.numPoints - 1)
+            threads.append(
+                threading.Thread(
+                    target=self.updatePointsThread,
+                    args=(first, last)
+                )
+            )
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
